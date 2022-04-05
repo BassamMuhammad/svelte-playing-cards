@@ -73,8 +73,8 @@ A highly customizable package for making card games in svelte. Provides two comp
     |:---:|:------------:|:---------:|
     |width|"200px"|width|
     |height|"250px"|height|
-    |topPosition|"0px"|top position (in case of position = absolute)|
-    |leftPosition|"0px"|left position (in case of position = absolute)|
+    |topPosition|"0px"|css top (in case of position = absolute)|
+    |leftPosition|"0px"|css left (in case of position = absolute)|
     |position|"absolute"|position|
     |showBackSide|true|should show back side|
     |**card***|-|card face value (value-of-suit)|
@@ -93,8 +93,9 @@ A highly customizable package for making card games in svelte. Provides two comp
     |showFront|show frontside of card|
     |showBack|show backside of card|
     |drop|function to call when drop the card on HTMLElement|    
-    |getPosition|get position of the card|
-    |setPosition|set position of the card|
+    |getPosition|get css top and left of the card|
+    |setPosition|set css top and left of the card|
+    |getSuppliedProps|get supplied props to the card|
     |shufflingTransition|make shuffling transition. (does not make sense to use it alone. Better to use in a deck)|
 
 
