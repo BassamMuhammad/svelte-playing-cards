@@ -61,7 +61,7 @@ it('Back customization working properly', () => {
 });
 
 describe('get correct card', () => {
-	const cardPath = 'cards';
+	const cardPath = './cards';
 	it('Clubs', () => {
 		const { getByRole } = render(Card, {
 			props: {

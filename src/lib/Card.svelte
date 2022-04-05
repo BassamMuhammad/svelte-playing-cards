@@ -54,8 +54,6 @@
 
 	let visible = true;
 	let rootElem: HTMLElement;
-	let srcBack = `cards/card-back.svg`;
-	let altBack = 'backside of card';
 	let srcFront: string = null;
 	let altFront: string = null;
 	let flyX = 0;
@@ -283,7 +281,7 @@
 	 * get srcFront and altFront
 	 */
 	const getFrontDesign = () => {
-		let src = 'cards/';
+		let src = `./cards/`;
 		if (card.includes('CLUBS')) {
 			src += `clubs/`;
 		} else if (card.includes('HEARTS')) {
@@ -306,7 +304,6 @@
 			altFront = card;
 		}
 	};
-
 	if (!customFront) getFrontDesign();
 </script>
 
@@ -332,12 +329,16 @@
 			{#if customBack}
 				<svelte:component this={customBack} />
 			{:else}
-				<img src={srcBack} alt={altBack} />
+				{#await import('./cards/card-back.svg') then backImg}
+					<img src={backImg.default} alt="backside of card" />
+				{/await}
 			{/if}
 		{:else if customFront}
 			<svelte:component this={customFront} />
 		{:else}
-			<img src={srcFront} alt={altFront} />
+			{#await import(srcFront) then frontImg}
+				<img src={frontImg.default} alt={altFront} />
+			{/await}
 		{/if}
 	</div>
 {/if}
