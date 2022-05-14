@@ -1,5 +1,7 @@
 <script context="module" lang="ts">
+	/**typescript type - all the 4 suits */
 	export type Suit = 'SPADES' | 'DIAMONDS' | 'HEARTS' | 'CLUBS';
+	/**typescript type - all the values a card can take except JOKER*/
 	export type ValueWithoutJoker =
 		| '2'
 		| '3'
@@ -14,7 +16,9 @@
 		| 'QUEEN'
 		| 'KING'
 		| 'ACE';
+	/**typescript type - all the values a card can take including JOKER*/
 	export type Value = ValueWithoutJoker | 'JOKER';
+	/**typescript type - all 54 value-of-suit a card can take*/
 	export type CardType = `${ValueWithoutJoker}-of-${Suit}` | 'BLACK-JOKER' | 'RED-JOKER';
 </script>
 
@@ -43,6 +47,8 @@
 	export let customFront: typeof SvelteComponent = null;
 	/**@default true*/
 	export let enableDrag = true;
+	/**rotate 90deg to swap width and height. @default false*/
+	export let shouldRotate = false;
 	/**Handle the on:click event (defaults to flipping the card)*/
 	export let onClick: svelte.JSX.MouseEventHandler<HTMLDivElement> = () => {
 		flip();
@@ -61,6 +67,9 @@
 	let flyDuration = 2000;
 	let flyEasing = linear;
 	let flyDelay = 0;
+
+	/**get the card value hold by this card*/
+	export const getCard = () => card;
 
 	/**
 	 * flip the face of card.
@@ -98,8 +107,9 @@
 		} = { duration: 2000, easing: linear, delay: 0 }
 	) => {
 		const { delay, duration, easing } = options;
-		flyX = targetX;
-		flyY = targetY;
+		const { x, y } = rootElem.getBoundingClientRect();
+		flyX = targetX - x;
+		flyY = targetY - y;
 		flyDelay = delay;
 		flyDuration = duration;
 		flyEasing = easing;
@@ -281,7 +291,7 @@
 	 * get srcFront and altFront
 	 */
 	const getFrontDesign = () => {
-		let src = `./cards/`;
+		let src = ``;
 		if (card.includes('CLUBS')) {
 			src += `clubs/`;
 		} else if (card.includes('HEARTS')) {
@@ -299,7 +309,7 @@
 			srcFront = src;
 			altFront = strParts[strParts.length - 1].replace('.svg', '');
 		} else {
-			src += `${card}.svg`;
+			src += card;
 			srcFront = src;
 			altFront = card;
 		}
@@ -307,6 +317,17 @@
 	if (!customFront) getFrontDesign();
 </script>
 
+<!-- @component
+Component to render a card
+    Import component by
+    ```svelte
+    import Card from "svelte-playing-cards"
+    ```
+    and use it in your code 
+    ```svelte
+    <Card card="10-of-CLUBS" />
+    ```    
+-->
 {#if visible}
 	<div
 		data-testid="card"
@@ -323,7 +344,9 @@
 		}}
 		draggable={!enableDrag ? 'false' : 'true'}
 		on:dragstart={(event) => (!enableDrag ? event.preventDefault() : null)}
-		style={`cursor:pointer;width: ${width};height:${height};position:${position};top:${topPosition};left:${leftPosition}`}
+		style={`cursor:pointer;width: ${width};height:${height};position:${position};top:${topPosition};left:${leftPosition};transform:rotate(${
+			shouldRotate ? '9' : ''
+		}0deg)`}
 	>
 		{#if showBackSide}
 			{#if customBack}
@@ -336,7 +359,7 @@
 		{:else if customFront}
 			<svelte:component this={customFront} />
 		{:else}
-			{#await import(srcFront) then frontImg}
+			{#await import(`./cards/${srcFront}.svg`) then frontImg}
 				<img src={frontImg.default} alt={altFront} />
 			{/await}
 		{/if}

@@ -1,7 +1,12 @@
 # Svelte Playing Cards
 A highly customizable package for making card games in svelte. Provides two components Card and Deck. By default renders svg cards by [nicubunu](https://openclipart.org/artist/nicubunu).
 
-
+To import types for typescript project:
+```svelte
+<script>
+    import type {Suit,Value,ValueWithoutJoker,CardType} from 'svelte-playing-cards/Card.svelte';
+</script>
+```
 ## Usage  
 1. **Deck**  
    Component to generate deck of cards 
@@ -38,9 +43,25 @@ A highly customizable package for making card games in svelte. Provides two comp
     |onClick|remove the top card from deck| on:click handler|
     |onDblClick|shuffle the deck| on:dblclick handler|
 
-    Methods are:
+    To use methods:
+    ```svelte
+    <script>
+        import Deck from "svelte-playing-cards/Deck.svelte"
+        let deckComp: Deck;
+
+        $: if(deckComp){
+            // now you can use the methods available on Deck like deckComp.drawTopCard()
+        }
+    </script>
+
+    <Deck bind:this={deckComp} />
+    ```
+
+    Available methods are:
     |Methods|Description|
     |:-----:|:---------:|
+    |gettingReady|makes Deck ready to call other method upon. Only needed if you need to call other methods immediatly after initialization|
+    |getDeck|get the deck|
     |drawTopCard|remove the top card|
     |drawCards| remove n cards|
     |shuffle|shuffle the deck|
@@ -64,7 +85,7 @@ A highly customizable package for making card games in svelte. Provides two comp
     ```
     and use it in your code 
     ```svelte
-    <Card card={"10-of-CLUBS"} />
+    <Card card="10-of-CLUBS" />
     ```
     
     Other props are:
@@ -81,12 +102,28 @@ A highly customizable package for making card games in svelte. Provides two comp
     |customBack|null|custom component to display on backside of card|
     |customFront|null|custom component to display on frontside of card|
     |enableDrag|true|allow card to be drag and drop|
+    |shouldRotate|false|rotate 90deg to swap width and height|
     |onClick|flip the card| on:click handler|
     |onDblClick|remove the card (from DOM)| on:dblclick handler|
 
-     Methods are:
+    To use methods:
+    ```svelte
+    <script>
+        import Card from "svelte-playing-cards/Card.svelte"
+        let cardComp: Deck;
+
+        $: if(cardComp){
+            // now you can use the methods available on Card like cardComp.flip()
+        }
+    </script>
+
+    <Card bind:this={cardComp} />
+    ```
+
+    Available methods are:
     |Methods|Description|
     |:-----:|:---------:|
+    |getCard|get the card value hold by this card|
     |flip|flip the card|
     |remove|remove the card (from DOM)|
     |transitionToTarget|transitions the card towards target|
@@ -97,8 +134,5 @@ A highly customizable package for making card games in svelte. Provides two comp
     |setPosition|set css top and left of the card|
     |getSuppliedProps|get supplied props to the card|
     |shufflingTransition|make shuffling transition. (does not make sense to use it alone. Better to use in a deck)|
-
-
-
 
 

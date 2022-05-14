@@ -5,7 +5,7 @@
 	import Card from './Card.svelte';
 
 	/**
-	 * list of cards to render (pushes all 52 cards without jokers if nothing or empty array is supplied)
+	 * list of cards to render (pushes all 52 cards without jokers if nothing or empty array is supplied).
 	 * without shuffling the last value in deck is rendered on top
 	 */
 	export let deck: CardType[] = [];
@@ -48,43 +48,70 @@
 	/**list of rendered Cards*/
 	let renderedCards: Card[] = [];
 	let deckFilled = false; // true it after generating deck
-	const initialTopPosition = topPosition;
-	const intialLeftPosition = leftPosition;
+	let initialRender = false;
+	let doneShuffling = false;
+	/**
+	 * Makes the deck ready to call methods upon. Only need to call this method if you want to call any method
+	 * immediately on component initilization i.e. without waiting for any event to occur.
+	 *
+	 * @param waitTime time to wait before ready. @default 10ms
+	 * @example
+	 * ```js
+	 * //...
+	 * let deckComp;
+	 * let cardProps;
+	 * //...
+	 *
+	 * const execMethod = async()=>{
+	 * 	await deckComp.gettingReady();
+	 * 	// use any method on deckComp
+	 * }
+	 * $: if(deckComp){
+	 * 	    execMethod()
+	 * 	  }
+	 * ```
+	 */
+	export const gettingReady = async (waitTime = 10) => {
+		await new Promise((res) => setTimeout(res, waitTime));
+	};
+
+	/** get the deck */
+	export const getDeck = () => deck;
 
 	/**
-   * get top card
-   * @param targetX x-coordinate of target to transition to 
-   * (to avoid transition either provide null or nothing)
-   * @param targetY y-coordinate of target to transition to 
-   * (to avoid transition either provide null or nothing)
-   * @param options  options to control transition 
-   * @param options.duration milliseconds to complete transition
-   * @param options.easing easing function
-   * @param options.delay milliseconds after which transition starts
-   * @param removeFromDom remove card from dom (if true index 1 of return array will be useless)
-   * supplying targetX and targetY automatically removes old instance of card
-   * 
-   * @returns [card face (value-of-suit), the card component, props passed to card component]
-   * @example
-   * ```js
-   * //...
-   * let deckComp
-   * let cardProps;
-   * //...
-   * ```
-   * ```svelte
-   * <Deck bind:this={deckComp}/>
-   * <div on:click={(e)=>{
-   *  const { x, y } = e.currentTarget.getBoundingClientRect();
-   *  const cards= deckComp.drawTopCard(x,y)
-   *  setTimeout(()=>cardProps = cards[2] , 2000) //set timeout according to animation options provided
-   * }}>
-   * {#if cardProps}
-      <svelte:component this={Card} {...cardProps} />
-    {/if}
-   * </div>
-   * ```
-   */
+	 * get top card
+	 * @param targetX x-coordinate of target to transition to
+	 * (to avoid transition either provide null or nothing)
+	 * @param targetY y-coordinate of target to transition to
+	 * (to avoid transition either provide null or nothing)
+	 * @param options  options to control transition
+	 * @param options.duration milliseconds to complete transition
+	 * @param options.easing easing function
+	 * @param options.delay milliseconds after which transition starts
+	 * @param removeFromDom remove card from dom (if true index 1 of return array will be useless)
+	 * supplying targetX and targetY automatically removes old instance of card
+	 *
+	 * @returns [card face (value-of-suit), the card component, props passed to card component] or null if deck is empty
+	 * @example
+	 * ```js
+	 * //...
+	 * let deckComp
+	 * let cardProps;
+	 * //...
+	 * ```
+	 * ```svelte
+	 * <Deck bind:this={deckComp}/>
+	 * <div on:click={(e)=>{
+	 *  const { x, y } = e.currentTarget.getBoundingClientRect();
+	 *  const cards= deckComp.drawTopCard(x,y)
+	 *  setTimeout(()=>cardProps = cards[2] , 2000) //set timeout according to animation options provided
+	 * }}>
+	 * {#if cardProps}
+	 *	<svelte:component this={Card} {...cardProps} />
+	 *	{/if}
+	 * </div>
+	 * ```
+	 */
 	export const drawTopCard = (
 		targetX: number = null,
 		targetY: number = null,
@@ -94,7 +121,8 @@
 			delay?: number;
 		} = { duration: 2000, easing: linear, delay: 0 },
 		removeFromDom = false
-	): [CardType, Card, SvelteAllProps] => {
+	): [CardType, Card, SvelteAllProps] | null => {
+		if (deck.length === 0 || renderedCards.length === 0) return null;
 		const card = deck.pop();
 		const renderedCard = renderedCards.pop();
 		let renderedCardProps: SvelteAllProps = null;
@@ -105,40 +133,40 @@
 	};
 
 	/**
-   * get top n cards
-   * 
-   * @param numOfCards number of cards to draw
-   * @param targetX x-coordinate of target to transition to 
-   * (to avoid transition either provide null or nothing)
-   * @param targetY y-coordinate of target to transition to 
-   * (to avoid transition either provide null or nothing)
-   * @param options  options to control transition  
-   * @param options.duration milliseconds to complete transition
-   * @param options.easing easing function
-   * @param options.delay milliseconds after which transition starts
-   * 
-   * @returns [list of  card face (value-of-suit), list of card components,list of props passed to card components]
-   * 
-   * @example
-   * ```js
-   * //...
-   * let deckComp
-   * let cardsProps = [];
-   * //...
-   * ```
-   * ```svelte
-   * <Deck bind:this={deckComp}/>
-   * <div on:click={(e)=>{
-   *  const { x, y } = e.currentTarget.getBoundingClientRect();
-   *  const cards = deckComp.drawCards(5,x,y)
-   *  cardsProps = cardProps.concat(cards[2])
-   * }}>
-   * {#each cardsProps as cardProps,index (`${cardProps.card}-${index}`) }
-      <svelte:component this={Card} {...cardProps} />
-    {/each}
-   * </div>
-   * ```
-   */
+	 * get top n cards
+	 *
+	 * @param numOfCards number of cards to draw
+	 * @param targetX x-coordinate of target to transition to
+	 * (to avoid transition either provide null or nothing)
+	 * @param targetY y-coordinate of target to transition to
+	 * (to avoid transition either provide null or nothing)
+	 * @param options  options to control transition
+	 * @param options.duration milliseconds to complete transition
+	 * @param options.easing easing function
+	 * @param options.delay milliseconds after which transition starts
+	 *
+	 * @returns [list of  card face (value-of-suit), list of card components,list of props passed to card components]
+	 * or null if deck is empty
+	 * @example
+	 * ```js
+	 * //...
+	 * let deckComp
+	 * let cardsProps = [];
+	 * //...
+	 * ```
+	 * ```svelte
+	 * <Deck bind:this={deckComp}/>
+	 * <div on:click={(e)=>{
+	 *  const { x, y } = e.currentTarget.getBoundingClientRect();
+	 *  const cards = deckComp.drawCards(5,x,y)
+	 *  cardsProps = cardsProps.concat(cards[2])
+	 * }}>
+	 * {#each cardsProps as cardProps }
+	 *  <svelte:component this={Card} {...cardProps} />
+	 * {/each}
+	 * </div>
+	 * ```
+	 */
 	export const drawCards = (
 		numOfCards: number,
 		targetX: number = null,
@@ -148,7 +176,8 @@
 			easing?: (x: any) => any;
 			delay?: number;
 		} = { duration: 2000, easing: linear, delay: 0 }
-	): [CardType[], Card[], SvelteAllProps[]] => {
+	): [CardType[], Card[], SvelteAllProps[]] | null => {
+		if (deck.length === 0 || renderedCards.length === 0) return null;
 		const cardsDrawn: CardType[] = [];
 		const renderedDrawnCards: Card[] = [];
 		const renderedDrawnCardsProps: SvelteAllProps[] = [];
@@ -162,10 +191,11 @@
 		let i = 0;
 		const perTransitionDuration = options.duration / numOfCards;
 		const transition = () => {
-			renderedDrawnCards[i++].transitionToTarget(targetX, targetY, {
+			renderedDrawnCards[i].transitionToTarget(targetX, targetY, {
 				...options,
 				duration: perTransitionDuration
 			});
+			i++;
 		};
 		transition();
 		const interval = setInterval(() => {
@@ -254,8 +284,12 @@
 			shuffleTransition(axis, offset, increment, ms, repeatAfter, cycles);
 			setTimeout(() => {
 				shufflingLogic();
+				doneShuffling = true;
 			}, repeatAfter * (cycles + 1));
-		} else shufflingLogic();
+		} else {
+			shufflingLogic();
+			doneShuffling = true;
+		}
 	};
 
 	/**
@@ -413,25 +447,17 @@
 		return cardCustomFront ? cardCustomFront[1] : null;
 	};
 
-	/**
-	 * remove all the cards and reset top and left positions
-	 */
-	const deRenderDeck = () => {
-		topPosition = initialTopPosition;
-		leftPosition = intialLeftPosition;
-		while (renderedCards.length > 0) {
-			const renderedCard = renderedCards.pop();
-			renderedCard.$destroy();
-		}
-	};
-
-	if (deck.length === 0) generateFullDeck({ shouldShuffle });
-	else deckFilled = true;
-	$: if (deckContainer) {
-		deRenderDeck();
+	if (deck.length === 0) generateFullDeck();
+	else {
+		if (shouldShuffle) shuffle();
+		else doneShuffling = true;
+		deckFilled = true;
+	}
+	$: if (deckContainer && !initialRender && doneShuffling) {
 		deck.forEach((card) => {
 			renderedCards.push(renderCard(card));
 		});
+		initialRender = true;
 	}
 </script>
 
@@ -439,7 +465,7 @@
 A component to generate deck of cards
 Import component by
     ```svelte
-    import Deck from "svelte-playing-cards/Deck.svelte"
+    import Deck from "svelte-playing-cards"
     ```
     and use it in your code 
     ```svelte
