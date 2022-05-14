@@ -72,10 +72,12 @@
 	 * ```
 	 */
 	export const gettingReady = async (waitTime = 10) => {
-		await new Promise((res) => setTimeout(res, waitTime));
+		await new Promise((resolve) => setTimeout(resolve, waitTime));
 	};
 
-	/** get the deck */
+	/** get the deck
+	 * @returns deck
+	 */
 	export const getDeck = () => deck;
 
 	/**
@@ -91,7 +93,7 @@
 	 * @param removeFromDom remove card from dom (if true index 1 of return array will be useless)
 	 * supplying targetX and targetY automatically removes old instance of card
 	 *
-	 * @returns [card face (value-of-suit), the card component, props passed to card component] or null if deck is empty
+	 * @returns promise that resolves to [card face (value-of-suit), the card component, props passed to card component] or null if deck is empty
 	 * @example
 	 * ```js
 	 * //...
@@ -101,10 +103,10 @@
 	 * ```
 	 * ```svelte
 	 * <Deck bind:this={deckComp}/>
-	 * <div on:click={(e)=>{
+	 * <div on:click={async(e)=>{
 	 *  const { x, y } = e.currentTarget.getBoundingClientRect();
-	 *  const cards= deckComp.drawTopCard(x,y)
-	 *  setTimeout(()=>cardProps = cards[2] , 2000) //set timeout according to animation options provided
+	 *  const cards = await deckComp.drawTopCard(x,y)
+	 *  cardProps = cards[2]
 	 * }}>
 	 * {#if cardProps}
 	 *	<svelte:component this={Card} {...cardProps} />
@@ -112,7 +114,7 @@
 	 * </div>
 	 * ```
 	 */
-	export const drawTopCard = (
+	export const drawTopCard = async (
 		targetX: number = null,
 		targetY: number = null,
 		options: {
@@ -121,13 +123,13 @@
 			delay?: number;
 		} = { duration: 2000, easing: linear, delay: 0 },
 		removeFromDom = false
-	): [CardType, Card, SvelteAllProps] | null => {
+	): Promise<[CardType, Card, SvelteAllProps] | null> => {
 		if (deck.length === 0 || renderedCards.length === 0) return null;
 		const card = deck.pop();
 		const renderedCard = renderedCards.pop();
 		let renderedCardProps: SvelteAllProps = null;
 		if (targetX && targetY) {
-			renderedCardProps = renderedCard.transitionToTarget(targetX, targetY, options);
+			renderedCardProps = await renderedCard.transitionToTarget(targetX, targetY, options);
 		} else if (removeFromDom) renderedCard.remove();
 		return [card, renderedCard, renderedCardProps];
 	};
@@ -145,7 +147,7 @@
 	 * @param options.easing easing function
 	 * @param options.delay milliseconds after which transition starts
 	 *
-	 * @returns [list of  card face (value-of-suit), list of card components,list of props passed to card components]
+	 * @returns promise that resolves to [list of  card face (value-of-suit), list of card components,list of props passed to card components]
 	 * or null if deck is empty
 	 * @example
 	 * ```js
@@ -156,9 +158,9 @@
 	 * ```
 	 * ```svelte
 	 * <Deck bind:this={deckComp}/>
-	 * <div on:click={(e)=>{
+	 * <div on:click={async(e)=>{
 	 *  const { x, y } = e.currentTarget.getBoundingClientRect();
-	 *  const cards = deckComp.drawCards(5,x,y)
+	 *  const cards = await deckComp.drawCards(5,x,y)
 	 *  cardsProps = cardsProps.concat(cards[2])
 	 * }}>
 	 * {#each cardsProps as cardProps }
@@ -167,7 +169,7 @@
 	 * </div>
 	 * ```
 	 */
-	export const drawCards = (
+	export const drawCards = async (
 		numOfCards: number,
 		targetX: number = null,
 		targetY: number = null,
@@ -176,59 +178,48 @@
 			easing?: (x: any) => any;
 			delay?: number;
 		} = { duration: 2000, easing: linear, delay: 0 }
-	): [CardType[], Card[], SvelteAllProps[]] | null => {
+	): Promise<[CardType[], Card[], SvelteAllProps[]] | null> => {
 		if (deck.length === 0 || renderedCards.length === 0) return null;
 		const cardsDrawn: CardType[] = [];
 		const renderedDrawnCards: Card[] = [];
 		const renderedDrawnCardsProps: SvelteAllProps[] = [];
 		if (numOfCards > deck.length) numOfCards = deck.length;
 		for (let i = 0; i < numOfCards; i++) {
-			const drawn = drawTopCard();
+			const drawn = await drawTopCard();
 			cardsDrawn.push(drawn[0]);
 			renderedDrawnCards.push(drawn[1]);
 			renderedDrawnCardsProps.push(drawn[1].getSuppliedProps());
 		}
-		let i = 0;
 		const perTransitionDuration = options.duration / numOfCards;
-		const transition = () => {
-			renderedDrawnCards[i].transitionToTarget(targetX, targetY, {
+		const transition = async (i: number) => {
+			await renderedDrawnCards[i].transitionToTarget(targetX, targetY, {
 				...options,
 				duration: perTransitionDuration
 			});
-			i++;
 		};
-		transition();
-		const interval = setInterval(() => {
-			transition();
-		}, perTransitionDuration);
-		setTimeout(() => {
-			clearInterval(interval);
-		}, perTransitionDuration * renderedDrawnCards.length - 1);
+		for (let i = 0; i < numOfCards; i++) {
+			await transition(i);
+		}
 		return [cardsDrawn, renderedDrawnCards, renderedDrawnCardsProps];
 	};
 
 	/**
 	 * make shuffling transition.
 	 * time for one cycle = ((2 * offset) / increment) * ms
-	 * total time for transition = cycles * repeatAfter
+	 * total time for transition = cycles * time for one cycle
 	 * @param axis axis of shuffling
 	 * @param offset how far card goes before coming back
 	 * @param increment increment per ms milliseconds
 	 * @param ms  number of milliseconds to next point in transition
-	 * @param repeatAfter number of milliseconds to next cycle
 	 * @param cycles total cycles
 	 */
-	const shuffleTransition = (
+	const shuffleTransition = async (
 		axis: 'X' | 'Y' = 'Y',
 		offset = 100,
 		increment = 40,
 		ms = 50,
-		repeatAfter = 500,
 		cycles = 6
 	) => {
-		if (((2 * offset) / increment) * ms > repeatAfter)
-			throw new Error('does not satisfy ((2 * offset) / increment) * ms <= repeatAfter');
-
 		const renderedCardsLen = renderedCards.length;
 		if (renderedCardsLen > 0) {
 			const midpoint = Math.floor((0 + renderedCardsLen) / 2);
@@ -238,14 +229,11 @@
 				indexes.push(midpoint - i);
 				indexes.push(midpoint + i);
 			}
-			const interval = setInterval(() => {
-				indexes.forEach((index) => {
-					renderedCards[index].shufflingTransition(axis, offset, increment, ms);
-				});
-			}, repeatAfter);
-			setTimeout(() => {
-				clearInterval(interval);
-			}, repeatAfter * (cycles - 1));
+			for (let i = 0; i < cycles; i++) {
+				for (let j = 0; j < indexes.length; j++) {
+					await renderedCards[indexes[j]].shufflingTransition(axis, offset, increment, ms);
+				}
+			}
 		}
 	};
 
@@ -254,22 +242,20 @@
 	 *
 	 * if transition is allowed then time for one cycle = ((2 * offset) / increment) * ms
 	 *
-	 * total time for transition = cycles * repeatAfter
+	 * total time for transition = cycles * time for one cycle
 	 * @param allowTransition allow shuffling transition
 	 * @param axis axis of shuffling
 	 * @param offset how far card goes before coming back
 	 * @param increment increment per ms milliseconds
 	 * @param ms  number of milliseconds to next point in transition
-	 * @param repeatAfter number of milliseconds to next cycle
 	 * @param cycles total cycles
 	 */
-	export const shuffle = (
+	export const shuffle = async (
 		allowTransition = true,
 		axis: 'X' | 'Y' = 'Y',
 		offset = 100,
 		increment = 40,
 		ms = 50,
-		repeatAfter = 500,
 		cycles = 6
 	) => {
 		const shufflingLogic = () => {
@@ -280,65 +266,60 @@
 				deck[j] = tempCard;
 			}
 		};
-		if (allowTransition) {
-			shuffleTransition(axis, offset, increment, ms, repeatAfter, cycles);
-			setTimeout(() => {
-				shufflingLogic();
-				doneShuffling = true;
-			}, repeatAfter * (cycles + 1));
-		} else {
-			shufflingLogic();
-			doneShuffling = true;
-		}
+		shufflingLogic();
+		if (allowTransition) await shuffleTransition(axis, offset, increment, ms, cycles);
+		doneShuffling = true;
 	};
 
 	/**
 	 * show front of a card
 	 * @param indexOfCard index of card in deck
 	 */
-	export const showCardFront = (indexOfCard: number) => {
+	export const showCardFront = async (indexOfCard: number) => {
 		const frontShowingCard = deck[indexOfCard];
 		if (frontShowingCards.includes(frontShowingCard)) return;
 		frontShowingCards.push(frontShowingCard);
-		renderedCards[indexOfCard].showFront();
+		await renderedCards[indexOfCard].showFront();
 	};
 	/**
 	 * show back of a card
 	 * @param indexOfCard index of card in deck
 	 */
-	export const hideCardFront = (indexOfCard: number) => {
+	export const hideCardFront = async (indexOfCard: number) => {
 		const index = getFrontShowingCardIndex(deck[indexOfCard]);
 		if (index < 0) return; //if card not found that means it is already hidden
 		frontShowingCards.splice(index, 1);
-		renderedCards[indexOfCard].showBack();
+		await renderedCards[indexOfCard].showBack();
 	};
 	/**
 	 * flip a card
 	 * @param indexOfCard index of card in deck
 	 */
-	export const flipCard = (indexOfCard: number) => {
+	export const flipCard = async (indexOfCard: number) => {
 		const cardToFlip = deck[indexOfCard];
 		const index = getFrontShowingCardIndex(cardToFlip);
 		if (index < 0) {
 			frontShowingCards.push(cardToFlip);
-			renderedCards[indexOfCard].flip();
+			await renderedCards[indexOfCard].flip();
 		} else {
 			frontShowingCards.splice(index, 1);
-			renderedCards[indexOfCard].flip();
+			await renderedCards[indexOfCard].flip();
 		}
 	};
 	/**show front of top card*/
-	export const showTopCardFront = () => showCardFront(deck.length - 1);
+	export const showTopCardFront = async () => await showCardFront(deck.length - 1);
 	/**show back of top card*/
-	export const hideTopCardFront = () => hideCardFront(deck.length - 1);
+	export const hideTopCardFront = async () => await hideCardFront(deck.length - 1);
 	/**flip top card*/
-	export const flipTopCard = () => flipCard(deck.length - 1);
+	export const flipTopCard = async () => await flipCard(deck.length - 1);
 
 	/**
 	 * generate full deck
-	 * @param param0 options to include black joker,red joker and shuffle the deck
+	 * @param param0.withBlackJoker include black joker
+	 * @param param0.withRedJoker include red joker
+	 * @param param0.shouldShuffle shuffle the deck
 	 */
-	export const generateFullDeck = ({
+	export const generateFullDeck = async ({
 		withBlackJoker = false,
 		withRedJoker = false,
 		shouldShuffle = true
@@ -370,7 +351,7 @@
 		if (withRedJoker) tempCards.push('RED-JOKER');
 		deck = tempCards;
 		deckFilled = true;
-		if (shouldShuffle) shuffle();
+		if (shouldShuffle) await shuffle();
 	};
 	/**
 	 * function to call on on:drop event of element where card could be drag and drop to

@@ -68,7 +68,9 @@
 	let flyEasing = linear;
 	let flyDelay = 0;
 
-	/**get the card value hold by this card*/
+	/**get the card value hold by this card
+	 * @returns card the cardType passed
+	 */
 	export const getCard = () => card;
 
 	/**
@@ -79,8 +81,13 @@
 	 * @param increment value to increase transition by (should satisfy condition (90 % increment === 0))
 	 * @param ms milliseconds to next point in transition
 	 */
-	export const flip = (allowTransition = true, axis: 'X' | 'Y' = 'Y', increment = 5, ms = 30) => {
-		if (allowTransition) flipTransition(!showBackSide, axis, increment, ms);
+	export const flip = async (
+		allowTransition = true,
+		axis: 'X' | 'Y' = 'Y',
+		increment = 5,
+		ms = 30
+	) => {
+		if (allowTransition) await flipTransition(!showBackSide, axis, increment, ms);
 		else showBackSide = !showBackSide;
 	};
 	/**
@@ -97,7 +104,7 @@
 	 * @param options.delay milliseconds after which transition starts
 	 * @returns props passed to the card
 	 */
-	export const transitionToTarget = (
+	export const transitionToTarget = async (
 		targetX: number,
 		targetY: number,
 		options: {
@@ -114,6 +121,7 @@
 		flyDuration = duration;
 		flyEasing = easing;
 		visible = false;
+		await new Promise((resolve) => setTimeout(resolve, duration));
 		return $$props;
 	};
 	/**
@@ -124,13 +132,13 @@
 	 * @param increment value to increase transition by (should satisfy condition (90 % increment === 0))
 	 * @param ms milliseconds to next point in transition
 	 */
-	export const showFront = (
+	export const showFront = async (
 		allowTransition = true,
 		axis: 'X' | 'Y' = 'Y',
 		increment = 5,
 		ms = 30
 	) => {
-		if (allowTransition) flipTransition(false, axis, increment, ms);
+		if (allowTransition) await flipTransition(false, axis, increment, ms);
 		else showBackSide = true;
 	};
 	/**
@@ -141,13 +149,13 @@
 	 * @param increment value to increase transition by (should satisfy condition (90 % increment === 0))
 	 * @param ms milliseconds to next point in transition
 	 */
-	export const showBack = (
+	export const showBack = async (
 		allowTransition = true,
 		axis: 'X' | 'Y' = 'Y',
 		increment = 5,
 		ms = 30
 	) => {
-		if (allowTransition) flipTransition(true, axis, increment, ms);
+		if (allowTransition) await flipTransition(true, axis, increment, ms);
 		else showBackSide = false;
 	};
 	/**
@@ -219,6 +227,7 @@
 
 	/**
 	 * get the props given to the component
+	 * @returns props
 	 */
 	export const getSuppliedProps = () => $$props;
 
@@ -230,7 +239,7 @@
 	 * @param increment increment per ms milliseconds
 	 * @param ms  number of milliseconds to next point in transition
 	 */
-	export const shufflingTransition = (
+	export const shufflingTransition = async (
 		axis: 'X' | 'Y' = 'Y',
 		offset = 100,
 		increment = 40,
@@ -246,11 +255,14 @@
 			}
 			rootEle.style.transform = `translate${axis}(${(translate += increment)}px)`;
 		}, ms);
-		setTimeout(() => {
-			clearInterval(interval);
-			rootEle.style.transform = `translate${axis}(0px)`;
-			rootEle.style.zIndex = '0';
-		}, ((2 * offset) / initialIncrement) * ms);
+		await new Promise((resolve) =>
+			setTimeout(() => {
+				clearInterval(interval);
+				rootEle.style.transform = `translate${axis}(0px)`;
+				rootEle.style.zIndex = '0';
+				resolve(true);
+			}, ((2 * offset) / initialIncrement) * ms)
+		);
 	};
 
 	/**
@@ -260,7 +272,7 @@
 	 * @param increment value to increase transition by (should satisfy condition (90 % increment === 0))
 	 * @param ms milliseconds to next point in transition
 	 */
-	const flipTransition = (
+	const flipTransition = async (
 		newShowBackSide: boolean,
 		axis: 'X' | 'Y' = 'Y',
 		increment = 5,
@@ -281,10 +293,13 @@
 			}
 			rootEle.style.transform = `rotate${axis}(${(rotate += increment)}deg)`;
 		}, ms);
-		setTimeout(() => {
-			clearInterval(interval);
-			rootEle.style.transform = `rotate${axis}(0deg)`;
-		}, (180 / initialIncrement) * ms);
+		await new Promise((resolve) =>
+			setTimeout(() => {
+				clearInterval(interval);
+				rootEle.style.transform = `rotate${axis}(0deg)`;
+				resolve(true);
+			}, (180 / initialIncrement) * ms)
+		);
 	};
 
 	/**
