@@ -15,10 +15,12 @@
 	export let cardWidth = '200px';
 	/**height of single card @default 250px*/
 	export let cardHeight = '250px';
-	/**list of cards which should have custom front along with custom component*/
-	export let cardCustomFronts: [CardType, typeof SvelteComponent][] = [];
+	/**list of cards which should have custom front along with custom component and its props*/
+	export let cardCustomFronts: [CardType, typeof SvelteComponent, Record<string, unknown>][] = [];
 	/**custom component for back of cards*/
 	export let cardCustomBackComp: typeof SvelteComponent = null;
+	/**props for custom back component*/
+	export let cardCustomBackCompProps: Record<string, unknown> = {};
 	/**distance from top @default 0px*/
 	export let topPosition = '0px';
 	/**distance from left @default 0px*/
@@ -205,8 +207,10 @@
 
 	/**
 	 * make shuffling transition.
+	 *
 	 * time for one cycle = ((2 * offset) / increment) * ms
 	 * total time for transition = cycles * time for one cycle
+	 *
 	 * @param axis axis of shuffling
 	 * @param offset how far card goes before coming back
 	 * @param increment increment per ms milliseconds
@@ -218,7 +222,7 @@
 		offset = 100,
 		increment = 40,
 		ms = 50,
-		cycles = 6
+		cycles = 2
 	) => {
 		const renderedCardsLen = renderedCards.length;
 		if (renderedCardsLen > 0) {
@@ -241,8 +245,8 @@
 	 * shuffle the deck.
 	 *
 	 * if transition is allowed then time for one cycle = ((2 * offset) / increment) * ms
-	 *
 	 * total time for transition = cycles * time for one cycle
+	 *
 	 * @param allowTransition allow shuffling transition
 	 * @param axis axis of shuffling
 	 * @param offset how far card goes before coming back
@@ -256,7 +260,7 @@
 		offset = 100,
 		increment = 40,
 		ms = 50,
-		cycles = 6
+		cycles = 2
 	) => {
 		const shufflingLogic = () => {
 			for (let i = deck.length - 1; i > 0; i--) {
@@ -391,11 +395,14 @@
 	 * @param card the card face-value (value-of-suit)
 	 */
 	const renderCard = (card: CardType) => {
+		const [customFront, customFrontProps] = getCardCustomFrontCompWithProps(card);
 		return new Card({
 			target: deckContainer,
 			props: {
 				customBack: cardCustomBackComp,
-				customFront: getCardCustomFrontComp(card),
+				customBackProps: cardCustomBackCompProps,
+				customFront,
+				customFrontProps,
 				showBackSide: getFrontShowingCardIndex(card) < 0,
 				card,
 				width: cardWidth,
@@ -423,9 +430,11 @@
 	 * get custom front component of card
 	 * @param card card face value (value-of-suit)
 	 */
-	const getCardCustomFrontComp = (card: CardType) => {
+	const getCardCustomFrontCompWithProps = (
+		card: CardType
+	): [typeof SvelteComponent, Record<string, unknown>] => {
 		const cardCustomFront = cardCustomFronts.find((cardCustomFront) => cardCustomFront[0] === card);
-		return cardCustomFront ? cardCustomFront[1] : null;
+		return cardCustomFront ? [cardCustomFront[1], cardCustomFront[2]] : [null, {}];
 	};
 
 	if (deck.length === 0) generateFullDeck();

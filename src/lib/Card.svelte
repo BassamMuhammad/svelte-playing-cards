@@ -43,8 +43,12 @@
 	export let card: CardType;
 	/**Provide if need to customize backside of card*/
 	export let customBack: typeof SvelteComponent = null;
+	/**Provide if need to supply props to customBack*/
+	export let customBackProps: Record<string, unknown> = {};
 	/** Provide if need to customize frontside of card*/
 	export let customFront: typeof SvelteComponent = null;
+	/**Provide if need to supply props to customFront*/
+	export let customFrontProps: Record<string, unknown> = {};
 	/**@default true*/
 	export let enableDrag = true;
 	/**rotate 90deg to swap width and height. @default false*/
@@ -253,7 +257,8 @@
 				increment *= -1;
 				rootEle.style.zIndex = '1';
 			}
-			rootEle.style.transform = `translate${axis}(${(translate += increment)}px)`;
+			translate += increment;
+			rootEle.style.transform = `translate${axis}(${translate}px)`;
 		}, ms);
 		await new Promise((resolve) =>
 			setTimeout(() => {
@@ -365,14 +370,14 @@ Component to render a card
 	>
 		{#if showBackSide}
 			{#if customBack}
-				<svelte:component this={customBack} />
+				<svelte:component this={customBack} {...customBackProps} />
 			{:else}
 				{#await import('./cards/card-back.svg') then backImg}
 					<img src={backImg.default} alt="backside of card" />
 				{/await}
 			{/if}
 		{:else if customFront}
-			<svelte:component this={customFront} />
+			<svelte:component this={customFront} {...customFrontProps} />
 		{:else}
 			{#await import(`./cards/${srcFront}.svg`) then frontImg}
 				<img src={frontImg.default} alt={altFront} />

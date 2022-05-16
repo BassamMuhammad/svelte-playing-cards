@@ -33,8 +33,9 @@ To import types for typescript project:
     |shouldShuffle| true|should shuffle the supplied deck|
     |cardWidth| "200px"|width of single card|
     |cardHeight|"250px"|height of single card|
-    |cardCustomFronts|[ ]|list of cards which should have custom front along with custom component|
+    |cardCustomFronts|[ ]|list of cards which should have custom front along with custom component and its props|
     |cardCustomBackComp|null|custom component for back of cards|
+    |cardCustomBackCompProps|{}|props for custom back component|
     |topPosition|"0px"|distance from top|
     |leftPosition|"0px"|distance from left|
     |topPositionOffset|0.1|offset from topPosition (helps in giving 3d look to deck)|
@@ -100,7 +101,9 @@ To import types for typescript project:
     |showBackSide|true|should show back side|
     |**card***|-|card face value (value-of-suit)|
     |customBack|null|custom component to display on backside of card|
+    |customBackProps|{}|props for custom back component|
     |customFront|null|custom component to display on frontside of card|
+    |customFrontProps|{}|props for custom front component|
     |enableDrag|true|allow card to be drag and drop|
     |shouldRotate|false|rotate 90deg to swap width and height|
     |onClick|flip the card| on:click handler|
