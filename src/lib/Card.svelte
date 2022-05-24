@@ -27,7 +27,7 @@
 	import { fly } from 'svelte/transition';
 	import { linear } from 'svelte/easing';
 
-	/**Swidth of card @default 200px*/
+	/**width of card @default 200px*/
 	export let width = '200px';
 	/**height of card @default 250px*/
 	export let height = '250px';
@@ -354,7 +354,7 @@ Component to render a card
 		bind:this={rootElem}
 		on:click={onClick}
 		on:dblclick={onDblClick}
-		transition:fly={{
+		out:fly={{
 			x: flyX,
 			y: flyY,
 			duration: flyDuration,

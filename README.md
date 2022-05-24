@@ -1,5 +1,6 @@
 # Svelte Playing Cards
-A highly customizable package for making card games in svelte. Provides two components Card and Deck. By default renders svg cards by [nicubunu](https://openclipart.org/artist/nicubunu).
+A highly customizable package for making card games in svelte. Provides two components Card and Deck. By default renders svg cards by [nicubunu](https://openclipart.org/artist/nicubunu). 
+Check out an [example app](https://github.com/BassamMuhammad/rung) made with this package.
 
 To import types for typescript project:
 ```svelte
@@ -29,7 +30,7 @@ To import types for typescript project:
 
     |Props|Default values|Description|
     |:---:|:------------:|:---------:|
-    |deck | all 52 cards(without jokers)|list of cards to render|
+    |deck| all 52 cards(without jokers)|list of cards to render|
     |shouldShuffle| true|should shuffle the supplied deck|
     |cardWidth| "200px"|width of single card|
     |cardHeight|"250px"|height of single card|
@@ -64,17 +65,22 @@ To import types for typescript project:
     |gettingReady|makes Deck ready to call other method upon. Only needed if you need to call other methods immediatly after initialization|
     |getDeck|get the deck|
     |drawTopCard|remove the top card|
-    |drawCards| remove n cards|
-    |shuffle|shuffle the deck|
+    |drawCards|remove n cards|
+    |shuffleWithTransition|shuffle the deck with optional transition|
     |showCardFront|show frontside of a card|
     |hideCardFront|show backside of a card|
     |flipCard| flip a card|
     |showTopCardFront|show frontside of top card|
     |hideTopCardFront|show backside of top card|
     |flipTopCard| flip top card|
-    |generateFullDeck| generate the deck (with or without joker/s)
     |drop| drag and drop a card|
+    
 
+    Available Functions are:
+    |Functions|Description|
+    |:-------:|:---------:|
+    |generateFullDeckFun|generates a full deck (with/without jokers)
+    |shuffleFun|shuffle the provided deck|
 
 2. **Card**
 

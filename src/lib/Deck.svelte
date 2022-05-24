@@ -1,3 +1,58 @@
+<script lang="ts" context="module">
+	/**
+	 * generates deck of card
+	 * @param param0.withBlackJoker include black joker
+	 * @param param0.withRedJoker include red joker
+	 * @param param0.shouldShuffle shuffle the deck
+	 */
+	export const generateFullDeckFun = ({
+		withBlackJoker = false,
+		withRedJoker = false,
+		shouldShuffle = true
+	} = {}) => {
+		const deck: CardType[] = [];
+		const values: ValueWithoutJoker[] = [
+			'2',
+			'3',
+			'4',
+			'5',
+			'6',
+			'7',
+			'8',
+			'9',
+			'10',
+			'JACK',
+			'QUEEN',
+			'KING',
+			'ACE'
+		];
+		const suits: Suit[] = ['SPADES', 'DIAMONDS', 'HEARTS', 'CLUBS'];
+		for (let suit of suits) {
+			for (let value of values) {
+				deck.push(`${value}-of-${suit}`);
+			}
+		}
+		if (withBlackJoker) deck.push('BLACK-JOKER');
+		if (withRedJoker) deck.push('RED-JOKER');
+
+		if (shouldShuffle) shuffleFun(deck);
+		return deck;
+	};
+	/**
+	 * shuffle the deck.
+	 *
+	 * @param deck - deck of cards to shuffle
+	 */
+	export const shuffleFun = (deck: CardType[]) => {
+		for (let i = deck.length - 1; i > 0; i--) {
+			let j = Math.floor(Math.random() * i);
+			let tempCard = deck[i];
+			deck[i] = deck[j];
+			deck[j] = tempCard;
+		}
+	};
+</script>
+
 <script lang="ts">
 	import type { SvelteComponent } from 'svelte';
 	import { linear } from 'svelte/easing';
@@ -43,7 +98,7 @@
 	 * @param event onDblClick event
 	 */
 	export let onDblClick: svelte.JSX.MouseEventHandler<HTMLElement> = (event) => {
-		shuffle();
+		shuffleWithTransition();
 	};
 
 	let deckContainer: HTMLElement;
@@ -254,7 +309,7 @@
 	 * @param ms  number of milliseconds to next point in transition
 	 * @param cycles total cycles
 	 */
-	export const shuffle = async (
+	export const shuffleWithTransition = async (
 		allowTransition = true,
 		axis: 'X' | 'Y' = 'Y',
 		offset = 100,
@@ -262,15 +317,7 @@
 		ms = 50,
 		cycles = 2
 	) => {
-		const shufflingLogic = () => {
-			for (let i = deck.length - 1; i > 0; i--) {
-				let j = Math.floor(Math.random() * i);
-				let tempCard = deck[i];
-				deck[i] = deck[j];
-				deck[j] = tempCard;
-			}
-		};
-		shufflingLogic();
+		shuffleFun(deck);
 		if (allowTransition) await shuffleTransition(axis, offset, increment, ms, cycles);
 		doneShuffling = true;
 	};
@@ -323,39 +370,15 @@
 	 * @param param0.withRedJoker include red joker
 	 * @param param0.shouldShuffle shuffle the deck
 	 */
-	export const generateFullDeck = async ({
+	const generateFullDeck = async ({
 		withBlackJoker = false,
 		withRedJoker = false,
 		shouldShuffle = true
 	} = {}) => {
 		if (deckFilled) return;
-		const tempCards: CardType[] = [];
-		const values: ValueWithoutJoker[] = [
-			'2',
-			'3',
-			'4',
-			'5',
-			'6',
-			'7',
-			'8',
-			'9',
-			'10',
-			'JACK',
-			'QUEEN',
-			'KING',
-			'ACE'
-		];
-		const suits: Suit[] = ['CLUBS', 'DIAMONDS', 'HEARTS', 'SPADES'];
-		for (let value of values) {
-			for (let suit of suits) {
-				tempCards.push(`${value}-of-${suit}`);
-			}
-		}
-		if (withBlackJoker) tempCards.push('BLACK-JOKER');
-		if (withRedJoker) tempCards.push('RED-JOKER');
-		deck = tempCards;
+		deck = generateFullDeckFun({ withBlackJoker, withRedJoker, shouldShuffle: false });
 		deckFilled = true;
-		if (shouldShuffle) await shuffle();
+		if (shouldShuffle) await shuffleWithTransition();
 	};
 	/**
 	 * function to call on on:drop event of element where card could be drag and drop to
@@ -439,7 +462,7 @@
 
 	if (deck.length === 0) generateFullDeck();
 	else {
-		if (shouldShuffle) shuffle();
+		if (shouldShuffle) shuffleWithTransition();
 		else doneShuffling = true;
 		deckFilled = true;
 	}
@@ -449,6 +472,16 @@
 		});
 		initialRender = true;
 	}
+	const give3DLook = (len: string, lenOffset: number) => {
+		let unitsLength = 2;
+		if (len.includes('%')) unitsLength = 1;
+		else if (len.includes('rem')) unitsLength = 3;
+		else if (len.includes('vmax')) unitsLength = 4;
+		else if (len.includes('vmin')) unitsLength = 4;
+		return `${
+			parseFloat(len.slice(0, len.length - unitsLength)) + lenOffset * deck.length
+		}${len.slice(len.length - unitsLength)}`;
+	};
 </script>
 
 <!-- @component
@@ -472,9 +505,8 @@ Import component by
 	bind:this={deckContainer}
 	on:click={onClick}
 	on:dblclick={onDblClick}
-	style={`position:relative;width:${
-		parseFloat(cardWidth.slice(0, cardWidth.length - 2)) + leftPositionOffset * deck.length
-	}px;height:${
-		parseFloat(cardHeight.slice(0, cardHeight.length - 2)) + topPositionOffset * deck.length
-	}px`}
+	style={`position:relative;width:${give3DLook(cardWidth, leftPositionOffset)};height:${give3DLook(
+		cardHeight,
+		topPositionOffset
+	)}`}
 />

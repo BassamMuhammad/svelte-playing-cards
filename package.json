@@ -1,6 +1,6 @@
 {
 	"name": "svelte-playing-cards",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"private": false,
 	"description": "A customizable deck of playing cards",
 	"license": "MIT",
